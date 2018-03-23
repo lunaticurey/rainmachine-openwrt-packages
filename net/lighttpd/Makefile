@@ -1,4 +1,4 @@
-	#
+#
 # Copyright (C) 2006-2013 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.32
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.46
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_MD5SUM:=e5a6f57fc371a10646ff1a57056fa9c0
+#PKG_MD5SUM:=e5a6f57fc371a10646ff1a57056fa9c0
 
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING
@@ -22,6 +22,8 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+EXTRA_CFLAGS:= -std=gnu99
 
 define Package/lighttpd/Default
   SUBMENU:=Web Servers/Proxies
@@ -48,6 +50,8 @@ config LIGHTTPD_SSL
 	  lighttpd confguration file.
 endef
 
+BASE_MODULES:=dirlisting indexfile staticfile
+
 CONFIGURE_ARGS+= \
 	--libdir=/usr/lib/lighttpd \
 	--sysconfdir=/etc/lighttpd \
@@ -71,6 +75,7 @@ CONFIGURE_VARS+= \
 ifneq ($(strip $(CONFIG_LIGHTTPD_SSL)),)
   CONFIGURE_ARGS+= \
 	--with-openssl="$(STAGING_DIR)/usr"
+	BASE_MODULES+= openssl
 else
   CONFIGURE_ARGS+= \
 	--without-openssl
@@ -116,7 +121,7 @@ define Package/lighttpd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/lighttpd.init $(1)/etc/init.d/lighttpd
 	$(INSTALL_DIR) $(1)/usr/lib/lighttpd
-	for m in dirlisting indexfile staticfile; do \
+	for m in $(BASE_MODULES); do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/lighttpd/mod_$$$${m}.so $(1)/usr/lib/lighttpd/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/sbin
